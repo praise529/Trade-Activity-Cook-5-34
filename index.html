@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ancient Civilizations & Trade Routes</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --paper-bg: #fffcf5; 
+            --ink-color: #111111; 
+            --accent-gold: #d4af37;
+            --accent-clay: #a03025; 
+            --river-blue: #2980b9; 
+        }
+
+        body {
+            background-color: var(--paper-bg);
+            font-family: 'Lato', sans-serif;
+            color: var(--ink-color);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            font-weight: 700;
+        }
+
+        /* --- HEADER --- */
+        .header-bar {
+            background: linear-gradient(to right, #5d4037, #8d6e63);
+            color: #fff;
+            padding: 10px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 10000;
+            position: relative;
+            border-bottom: 3px solid var(--accent-gold);
+            flex-shrink: 0;
+        }
+        
+        .navbar-brand {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* --- NAVIGATION --- */
+        .nav-link {
+            color: #ccc;
+            font-weight: bold;
+            border: none;
+            margin-right: 5px;
+            font-family: 'Segoe UI', sans-serif;
+            cursor: pointer;
+            background: transparent;
+        }
+        .nav-link:hover {
+            color: #fff;
+        }
+        .nav-link.active {
+            color: var(--accent-gold) !important;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        /* Teacher Plan Button - Make it stand out */
+        #btn-lesson {
+            background: var(--accent-gold) !important;
+            color: #333 !important;
+            font-weight: bold !important;
+            border: 2px solid #fff !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+            transition: all 0.3s ease !important;
+            position: relative !important;
+            z-index: 10001 !important;
+        }
+        #btn-lesson:hover {
+            background: #f1c40f !important;
+            color: #000 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+            z-index: 10001 !important;
+        }
+
+        /* Ensure modal appears above everything */
+        .modal-backdrop {
+            z-index: 10049 !important;
+        }
+        #lessonPlanModal {
+            z-index: 10050 !important;
+        }
+        #lessonPlanModal .modal-dialog {
+            z-index: 10051 !important;
+        }
+
+        /* --- MAIN LAYOUT STACK --- */
+        #main-stage {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #a3c2c2;
+        }
+
+        /* 1. MAP LAYER (Base) */
+        #map-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            overflow: auto; /* Allow map panning if zoomed/large */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #map-container {
+            position: relative;
+            max-width: 1400px;
+            width: 100%;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+        }
+
+        #map-image {
+            width: 100%;
+            display: block;
+            transition: opacity 0.3s ease;
+        }
+
+        /* 2. LAB SIDEBAR (Overlay) */
+        #lab-sidebar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 350px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.96);
+            border-right: 4px solid var(--accent-gold);
+            box-shadow: 5px 0 25px rgba(0,0,0,0.2);
+            z-index: 100; /* Above map */
+            transform: translateX(-100%); /* Hidden by default */
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        #lab-sidebar.active {
+            transform: translateX(0); /* Slide in */
+        }
+
+        /* 3. QUIZ OVERLAY (Full Screen) */
+        #quiz-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--paper-bg);
+            z-index: 200; /* Top most */
+            display: none; /* Hidden by default */
+            overflow-y: auto;
+            padding: 40px 20px;
+        }
+        
+        #quiz-overlay.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* --- MAP CONTROLS --- */
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            z-index: 50; /* Above map image but below Lab sidebar */
+            width: 250px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* --- HOTSPOTS --- */
+        .map-hotspot {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        .map-hotspot:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+            z-index: 60;
+        }
+
+        .invisible-trigger {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px dashed rgba(0,0,0,0.2);
+            border-radius: 50%;
+        }
+        .invisible-trigger:hover {
+            background: rgba(255, 215, 0, 0.3);
+            border-color: #d4af37;
+            box-shadow: 0 0 15px #d4af37;
+        }
+
+        /* Styling Elements */
+        .region-label {
+            font-family: 'Georgia', serif;
+            font-size: 1.4rem;
+            color: #333;
+            text-shadow: 2px 2px 0 #fff;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .icon-marker {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border: 2px solid #444;
+            border-radius: 50%;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            font-size: 1.2rem;
+        }
+        .icon-gold { color: #f1c40f; border-color: #f1c40f; }
+        .icon-silk { color: #e74c3c; border-color: #e74c3c; }
+        .icon-spice { color: #e67e22; border-color: #e67e22; }
+        .icon-grain { color: #f39c12; border-color: #f39c12; }
+        .icon-gem { color: #9b59b6; border-color: #9b59b6; }
+        .icon-clay { color: #8b4513; border-color: #8b4513; }
+
+        .culture-icon {
+            font-size: 3.5rem;
+            filter: drop-shadow(0 3px 3px rgba(0,0,0,0.3));
+        }
+
+        /* Popovers */
+        .hotspot-popover {
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 220px;
+            background: #fff;
+            color: #333;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 2px solid var(--accent-gold);
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .hotspot-popover strong {
+            display: block;
+            font-family: 'Cinzel', serif;
+            color: var(--accent-clay);
+            border-bottom: 1px solid #eee;
+            margin-bottom: 5px;
+            padding-bottom: 3px;
+        }
+        .map-hotspot:hover .hotspot-popover {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Lab Items */
+        .lab-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-left: 5px solid #ccc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lab-item:hover {
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateX(5px);
+            border-left-color: var(--accent-clay);
+        }
+        .lab-item.completed {
+            background: #d1e7dd;
+            border-left-color: #198754;
+        }
+        .lab-item.completed .lab-title::after {
+            content: ' ✅';
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md header-bar">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white" href="#"><i class="fas fa-scroll me-2"></i>Ancient Trade Routes</a>
+            
+            <div class="ms-auto d-flex gap-2">
+                <button class="nav-link active" id="btn-map"><i class="fas fa-globe-africa me-1"></i> Map Explorer</button>
+                <button class="nav-link" id="btn-lab"><i class="fas fa-flask me-1"></i> Student Lab</button>
+                <button class="nav-link" id="btn-quiz"><i class="fas fa-question-circle me-1"></i> Quiz</button>
+                <button class="nav-link rounded ms-2 px-3 py-2" id="btn-lesson" style="font-size: 1rem;"><i class="fas fa-chalkboard-teacher me-1"></i> Teacher Plan</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Stage -->
+    <div id="main-stage">
+        
+        <!-- 1. MAP LAYER (Always present) -->
+        <div id="map-layer">
+            <div id="map-container">
+                <img id="map-image" src="ancient_trade_routes/map1.jpg" alt="Ancient Map">
+                <div id="hotspot-layer"></div>
+            </div>
+            
+            <!-- Map Controls (Floating) -->
+            <div class="control-panel">
+                <h6 class="border-bottom pb-2 mb-3 fw-bold text-uppercase text-muted" style="font-size: 0.8rem;">Map Layers</h6>
+                <div class="form-check mb-2">
+                    <input class="form-check-input map-radio" type="radio" name="mapMode" id="modeFoundations" value="foundations" checked>
+                    <label class="form-check-label fw-bold" for="modeFoundations">1. Cradles of Civilization</label>
+                    <div class="small text-muted ps-1" style="font-size: 0.8rem;">Geographic Foundations</div>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input map-radio" type="radio" name="mapMode" id="modeTrade" value="trade">
+                    <label class="form-check-label fw-bold" for="modeTrade">2. Trade Routes</label>
+                    <div class="small text-muted ps-1" style="font-size: 0.8rem;">Silk Road & Sea Lanes</div>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input map-radio" type="radio" name="mapMode" id="modeCulture" value="culture">
+                    <label class="form-check-label fw-bold" for="modeCulture">3. Cultural Icons</label>
+                    <div class="small text-muted ps-1" style="font-size: 0.8rem;">Art & Artifacts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. LAB SIDEBAR (Slides in over map) -->
+        <div id="lab-sidebar">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+                <h4 class="text-primary mb-0" style="font-family: 'Cinzel', serif;">Explorer's Lab</h4>
+                <button class="btn btn-sm btn-close" id="close-lab"></button>
+            </div>
+            
+            <p class="small text-muted mb-4">Complete the tasks below by interacting with the map. The map remains active while you work!</p>
+
+            <div class="lab-item" id="task-river">
+                <strong class="lab-title">1. River Valley Hunter</strong>
+                <p class="mb-0 small mt-1">Switch to Layer 1. Find and click 4 major river labels (Nile, Tigris, Indus, Yellow).</p>
+            </div>
+            <div class="lab-item" id="task-silk">
+                <strong class="lab-title">2. The Silk Road</strong>
+                <p class="mb-0 small mt-1">Switch to Layer 2. Find 'Silk' in China and 'Gold' in Egypt.</p>
+            </div>
+            <div class="lab-item" id="task-monsoon">
+                <strong class="lab-title">3. Sea Captain</strong>
+                <p class="mb-0 small mt-1">Switch to Layer 2. Find 'Spices' in India. Why are the sea routes blue?</p>
+            </div>
+            <div class="lab-item" id="task-culture">
+                <strong class="lab-title">4. Cultural Detective</strong>
+                <p class="mb-0 small mt-1">Switch to Layer 3. Find the Ziggurat. Which civilization built it?</p>
+            </div>
+
+            <div class="mt-4">
+                <label class="form-label fw-bold small text-uppercase text-muted">Field Notes</label>
+                <textarea class="form-control bg-light" rows="5" placeholder="Record your observations here..."></textarea>
+            </div>
+        </div>
+
+        <!-- 3. QUIZ OVERLAY (Full Screen) -->
+        <div id="quiz-overlay">
+            <div class="container" style="max-width: 800px;">
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0" style="font-family: 'Cinzel', serif;"><i class="fas fa-question-circle me-2"></i>Knowledge Check</h4>
+                        <button class="btn btn-outline-light btn-sm" id="close-quiz">Return to Map</button>
+                    </div>
+                    <div class="card-body p-4 bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="text-muted">Answer all 20 questions to complete the challenge.</span>
+                            <span class="badge bg-warning text-dark fs-6" id="score-badge">Score: 0 / 20</span>
+                        </div>
+                        <div id="quiz-container">
+                            <!-- Quiz Generated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="lessonPlanModal" tabindex="-1">
+        <div class="modal-dialog modal-xl" style="max-width: 95%;">
+            <div class="modal-content shadow-lg" style="border: 3px solid var(--accent-gold);">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--accent-clay), #8b4513); border-bottom: 4px solid var(--accent-gold);">
+                    <h4 class="modal-title fw-bold mb-0" style="font-family: 'Cinzel', serif;">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>Comprehensive Lesson Plan: Ancient Trade Routes & Civilizations
+                    </h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-5" style="max-height: 85vh; overflow-y: auto; background: var(--paper-bg);">
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3" style="color: var(--accent-clay); font-family: 'Cinzel', serif;">
+                            <i class="fas fa-info-circle me-2"></i>Overview
+                        </h4>
+                        <p class="lead">This interactive resource helps students explore how geography shaped early civilizations and how trade networks connected ancient cultures. Through an interactive map with multiple layers, students will discover the foundations of civilization, trace trade routes, and understand how goods and ideas flowed across continents.</p>
+                        <div class="alert alert-warning border-0 shadow-sm mt-3">
+                            <i class="fas fa-lightbulb me-2"></i><strong>Note:</strong> This resource requires no login or setup. It works entirely in a web browser and is designed to be self-guided or teacher-facilitated. The map uses static images that work offline once loaded.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3" style="color: var(--accent-clay); font-family: 'Cinzel', serif;">
+                            <i class="fas fa-bullseye me-2"></i>Learning Objectives
+                        </h4>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Identify and locate the four major river valley civilizations (Nile, Tigris/Euphrates, Indus, Yellow River)</li>
+                            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Explain how physical geography (rivers, deserts, seas) influenced where civilizations developed</li>
+                            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Map major trade routes including the Silk Road and monsoon sea routes</li>
+                            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Identify key trade goods from each civilization and understand their value</li>
+                            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Recognize that trade involved not just goods, but also ideas, technology, and culture</li>
+                            <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Connect geographic features to economic and cultural development</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="p-4 bg-light rounded border-start border-4 border-primary h-100 shadow-sm">
+                                <h5 class="fw-bold text-primary mb-3"><i class="fas fa-globe-americas me-2"></i>Geography Standards</h5>
+                                <ul class="mb-0 ps-3">
+                                    <li>Locate major physical features (rivers, deserts, seas, mountain ranges)</li>
+                                    <li>Explain how physical geography influenced human settlement patterns</li>
+                                    <li>Understand the relationship between geography and economic activity</li>
+                                    <li>Analyze how natural barriers and routes affected trade</li>
+                                    <li>Recognize the importance of water sources for early civilizations</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-4 bg-light rounded border-start border-4 border-warning h-100 shadow-sm">
+                                <h5 class="fw-bold text-warning mb-3"><i class="fas fa-landmark me-2"></i>History Standards</h5>
+                                <ul class="mb-0 ps-3">
+                                    <li>Identify key trade goods of ancient river civilizations</li>
+                                    <li>Describe cultural exchange along trade routes</li>
+                                    <li>Understand the role of trade in spreading ideas and technology</li>
+                                    <li>Compare and contrast different ancient civilizations</li>
+                                    <li>Recognize the interconnectedness of ancient societies</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3" style="color: var(--accent-clay); font-family: 'Cinzel', serif;">
+                            <i class="fas fa-clock me-2"></i>Suggested Time: 45-60 Minutes
+                        </h4>
+                        <p class="text-muted">Can be adapted for shorter or longer sessions depending on depth of exploration and student needs.</p>
+                            </div>
+
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3" style="color: var(--accent-clay); font-family: 'Cinzel', serif;">
+                            <i class="fas fa-map-marked-alt me-2"></i>How to Use This Resource
+                        </h4>
+                        
+                        <div class="accordion" id="lessonAccordion">
+                            <!-- Map Explorer -->
+                            <div class="accordion-item mb-3 shadow-sm">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#map-explorer-guide">
+                                        <i class="fas fa-globe-africa me-2 text-primary"></i><strong>Map Explorer</strong>
+                                    </button>
+                                </h2>
+                                <div id="map-explorer-guide" class="accordion-collapse collapse show" data-bs-parent="#lessonAccordion">
+                                    <div class="accordion-body">
+                                        <p><strong>Purpose:</strong> The main interactive map with three layers that students can explore to understand geography, trade, and culture.</p>
+                                        <p><strong>How to Use:</strong></p>
+                                        <ol>
+                                            <li><strong>Layer 1 - Cradles of Civilization:</strong>
+                                                <ul>
+                                                    <li>Shows the four major river valley civilizations</li>
+                                                    <li>Students can click on region labels (Egypt, Mesopotamia, Indus Valley, Ancient China) to see information</li>
+                                                    <li>Click on river markers (Nile, Tigris, Indus, Yellow) to learn about each river's importance</li>
+                                                    <li>Use this layer to establish geographic foundations</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Layer 2 - Trade Routes:</strong>
+                                                <ul>
+                                                    <li>Shows trade goods and routes across the ancient world</li>
+                                                    <li>Icons represent different commodities (Silk, Gold, Spices, Gems, Grain, etc.)</li>
+                                                    <li>Hover over icons to see what each civilization traded</li>
+                                                    <li>Trace the flow of goods from origin to destination</li>
+                                                    <li>Note the difference between land routes (Silk Road) and sea routes (monsoon routes)</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Layer 3 - Cultural Icons:</strong>
+                                                <ul>
+                                                    <li>Shows cultural artifacts and symbols from each civilization</li>
+                                                    <li>Includes writing systems, architecture, art, and cultural symbols</li>
+                                                    <li>Demonstrates that trade involved ideas, not just goods</li>
+                                                    <li>Click on invisible hotspots to reveal cultural information</li>
+                                                </ul>
+                                            </li>
+                                        </ol>
+                                        <p><strong>Teaching Tips:</strong></p>
+                                        <ul>
+                                            <li>Start with Layer 1 to establish geographic context before moving to trade</li>
+                                            <li>Have students predict what each civilization might trade before revealing Layer 2</li>
+                                            <li>Use Layer 3 to discuss how ideas spread along with goods</li>
+                                            <li>Encourage students to click on all hotspots to discover information</li>
+                                            <li>Ask students to trace a specific good (like silk) from origin to destination</li>
+                                        </ul>
+                        </div>
+                            </div>
+                        </div>
+
+                            <!-- Student Lab -->
+                            <div class="accordion-item mb-3 shadow-sm">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#lab-guide">
+                                        <i class="fas fa-flask me-2 text-success"></i><strong>Student Lab</strong>
+                                    </button>
+                                </h2>
+                                <div id="lab-guide" class="accordion-collapse collapse" data-bs-parent="#lessonAccordion">
+                                    <div class="accordion-body">
+                                        <p><strong>Purpose:</strong> Interactive sidebar with guided tasks that require students to actively explore the map to find answers.</p>
+                                        <p><strong>How to Use:</strong></p>
+                                        <ol>
+                                            <li><strong>Open the Lab:</strong> Click "Student Lab" button in the navigation. The sidebar slides in from the left, and the map remains visible.</li>
+                                            <li><strong>Complete Tasks:</strong> Students work through four tasks:
+                                                <ul>
+                                                    <li><strong>Task 1 - River Valley Hunter:</strong> Find and click 4 major river labels (Nile, Tigris, Indus, Yellow) on Layer 1</li>
+                                                    <li><strong>Task 2 - The Silk Road:</strong> Switch to Layer 2 and find 'Silk' in China and 'Gold' in Egypt</li>
+                                                    <li><strong>Task 3 - Sea Captain:</strong> On Layer 2, find 'Spices' in India and understand why sea routes are blue (monsoon winds)</li>
+                                                    <li><strong>Task 4 - Cultural Detective:</strong> Switch to Layer 3, find the Ziggurat, and identify which civilization built it (Mesopotamia)</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Mark Complete:</strong> Students click on each task to mark it as completed (checkmark appears)</li>
+                                            <li><strong>Field Notes:</strong> Students can record observations in the text area at the bottom</li>
+                                        </ol>
+                                        <p><strong>Teaching Tips:</strong></p>
+                                        <ul>
+                                            <li>Have students work in pairs to encourage discussion</li>
+                                            <li>Use the Field Notes section for reflection questions</li>
+                                            <li>Check student progress by seeing which tasks are marked complete</li>
+                                            <li>Encourage students to explore beyond the required tasks</li>
+                                            <li>Use completed tasks as discussion starters: "What did you discover about the Nile River?"</li>
+                                        </ul>
+                            </div>
+                        </div>
+                            </div>
+
+                            <!-- Quiz -->
+                            <div class="accordion-item mb-3 shadow-sm">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#quiz-guide">
+                                        <i class="fas fa-question-circle me-2 text-warning"></i><strong>Quiz (20 Questions)</strong>
+                                    </button>
+                                </h2>
+                                <div id="quiz-guide" class="accordion-collapse collapse" data-bs-parent="#lessonAccordion">
+                                    <div class="accordion-body">
+                                        <p><strong>Purpose:</strong> Comprehensive assessment covering geography, trade goods, civilizations, and cultural exchange.</p>
+                                        <p><strong>How to Use:</strong></p>
+                                        <ol>
+                                            <li><strong>Access the Quiz:</strong> Click "Quiz" button in navigation. The quiz opens as a full-screen overlay.</li>
+                                            <li><strong>Answer Questions:</strong> Students answer 20 multiple-choice questions covering:
+                                                <ul>
+                                                    <li>River locations and their civilizations</li>
+                                                    <li>Trade goods and their origins</li>
+                                                    <li>Geographic features and their importance</li>
+                                                    <li>Cultural achievements (writing, architecture, art)</li>
+                                                    <li>Trade routes and transportation methods</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Immediate Feedback:</strong> After selecting an answer, students see if they're correct (green) or incorrect (red), and the correct answer is highlighted</li>
+                                            <li><strong>Track Progress:</strong> Score badge shows current score (X/20) as students progress</li>
+                                            <li><strong>Review:</strong> Students can review all questions and their answers before closing</li>
+                                        </ol>
+                                        <p><strong>Teaching Tips:</strong></p>
+                                        <ul>
+                                            <li>Use the quiz as a formative assessment after students explore the map and complete the lab</li>
+                                            <li>Review incorrect answers as a class to address misconceptions</li>
+                                            <li>Have students retake the quiz until they achieve mastery (e.g., 16/20 or higher)</li>
+                                            <li>Use quiz questions as discussion prompts: "Why do you think rivers were so important?"</li>
+                                            <li>Connect quiz content back to the map - have students show where answers are located</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3" style="color: var(--accent-clay); font-family: 'Cinzel', serif;">
+                            <i class="fas fa-tasks me-2"></i>Detailed Lesson Flow (45-60 Minutes)
+                        </h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card h-100 border-primary shadow-sm">
+                                    <div class="card-header bg-primary text-white fw-bold">Phase 1: Geographic Foundations (10-12 min)</div>
+                                    <div class="card-body">
+                                        <ol class="small">
+                                            <li><strong>Introduction (2 min):</strong> Ask: "Why did all major ancient civilizations start near rivers?" Have students make predictions.</li>
+                                            <li><strong>Map Exploration (5 min):</strong> Switch to Layer 1 (Cradles of Civilization). Have students identify and click on:
+                                                <ul>
+                                                    <li>The four major civilizations (Egypt, Mesopotamia, Indus Valley, China)</li>
+                                                    <li>The four major rivers (Nile, Tigris/Euphrates, Indus, Yellow)</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Discussion (3-5 min):</strong> Discuss why rivers were essential:
+                                                <ul>
+                                                    <li>Water for drinking and irrigation</li>
+                                                    <li>Fertile soil from annual flooding</li>
+                                                    <li>Transportation routes</li>
+                                                    <li>Natural boundaries for defense</li>
+                                                </ul>
+                                            </li>
+                                        </ol>
+                        </div>
+                    </div>
+                </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-success shadow-sm">
+                                    <div class="card-header bg-success text-white fw-bold">Phase 2: The Web of Trade (15-18 min)</div>
+                                    <div class="card-body">
+                                        <ol class="small">
+                                            <li><strong>Transition (2 min):</strong> Ask: "Once civilizations developed, how did they connect?"</li>
+                                            <li><strong>Trade Layer Exploration (8 min):</strong> Switch to Layer 2 (Trade Routes). Have students:
+                                                <ul>
+                                                    <li>Identify trade goods from each region</li>
+                                                    <li>Trace the Silk Road from China to the Mediterranean</li>
+                                                    <li>Identify sea routes (monsoon routes) for spices</li>
+                                                    <li>Compare land vs. sea transportation</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Discussion (5-8 min):</strong> Key questions:
+                                                <ul>
+                                                    <li>"Why was silk so valuable that it was kept secret?"</li>
+                                                    <li>"Why use ships for spices instead of land routes?"</li>
+                                                    <li>"What made gold valuable across all civilizations?"</li>
+                                                    <li>"How did geography determine what each region could trade?"</li>
+                                                </ul>
+                                            </li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-warning shadow-sm">
+                                    <div class="card-header bg-warning text-dark fw-bold">Phase 3: Independent Exploration (20-25 min)</div>
+                                    <div class="card-body">
+                                        <ol class="small">
+                                            <li><strong>Open Student Lab (2 min):</strong> Demonstrate how to open the Student Lab sidebar</li>
+                                            <li><strong>Task Completion (15-18 min):</strong> Students work independently or in pairs to complete all 4 lab tasks:
+                                                <ul>
+                                                    <li>Monitor progress by checking which tasks are completed</li>
+                                                    <li>Circulate to answer questions and provide guidance</li>
+                                                    <li>Encourage students to explore beyond required tasks</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Field Notes (3-5 min):</strong> Students record key observations in the Field Notes section</li>
+                                            <li><strong>Share Findings (5 min):</strong> Have students share one interesting discovery from their exploration</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-info shadow-sm">
+                                    <div class="card-header bg-info text-white fw-bold">Phase 4: Assessment & Synthesis (10-12 min)</div>
+                                    <div class="card-body">
+                                        <ol class="small">
+                                            <li><strong>Cultural Layer (3 min):</strong> Quick exploration of Layer 3 to show that trade involved ideas, not just goods</li>
+                                            <li><strong>Quiz (5-7 min):</strong> Students complete the 20-question quiz</li>
+                                            <li><strong>Review (2-3 min):</strong> Review common misconceptions and celebrate correct answers</li>
+                                            <li><strong>Synthesis (2 min):</strong> Final discussion: "How did geography and trade shape the ancient world?"</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3" style="color: var(--accent-clay); font-family: 'Cinzel', serif;">
+                            <i class="fas fa-lightbulb me-2"></i>Key Discussion Questions
+                        </h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card border-primary h-100">
+                                    <div class="card-header bg-primary text-white"><strong>Geographic Questions</strong></div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li>Why did all major civilizations develop near rivers?</li>
+                                            <li>How did deserts and mountains affect trade routes?</li>
+                                            <li>Why were some civilizations more isolated than others?</li>
+                                            <li>How did geography determine what each region could produce?</li>
+                                            <li>What role did seas and oceans play in connecting civilizations?</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-warning h-100">
+                                    <div class="card-header bg-warning text-dark"><strong>Trade & Culture Questions</strong></div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li>Why was silk so valuable that China kept it secret?</li>
+                                            <li>How did ideas travel along with goods?</li>
+                                            <li>What made certain goods more valuable than others?</li>
+                                            <li>How did trade change the civilizations involved?</li>
+                                            <li>What would the ancient world have been like without trade?</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3" style="color: var(--accent-clay); font-family: 'Cinzel', serif;">
+                            <i class="fas fa-star me-2"></i>Extension Activities
+                        </h4>
+                        <ul class="list-group">
+                            <li class="list-group-item"><i class="fas fa-star text-warning me-2"></i><strong>Trade Route Research:</strong> Have students research one specific trade route (Silk Road, Monsoon Routes, Incense Route) and create a detailed map showing goods, distances, and challenges.</li>
+                            <li class="list-group-item"><i class="fas fa-star text-warning me-2"></i><strong>Commodity Study:</strong> Students choose one trade good (silk, spices, gold, etc.) and trace its journey from origin to final destination, including who traded it and why it was valuable.</li>
+                            <li class="list-group-item"><i class="fas fa-star text-warning me-2"></i><strong>Civilization Comparison:</strong> Create a comparison chart analyzing the four river valley civilizations, focusing on geography, trade goods, and cultural achievements.</li>
+                            <li class="list-group-item"><i class="fas fa-star text-warning me-2"></i><strong>Modern Connections:</strong> Research how modern trade routes (like shipping lanes) compare to ancient routes. What has changed? What remains the same?</li>
+                            <li class="list-group-item"><i class="fas fa-star text-warning me-2"></i><strong>Cultural Exchange Project:</strong> Students research how writing systems, art styles, or religious ideas spread along trade routes.</li>
+                            <li class="list-group-item"><i class="fas fa-star text-warning me-2"></i><strong>Trade Simulation:</strong> Create a classroom simulation where students represent different civilizations and must negotiate trades based on what their region produces.</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3" style="color: var(--accent-clay); font-family: 'Cinzel', serif;">
+                            <i class="fas fa-users-cog me-2"></i>Differentiation Strategies
+                        </h4>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="card border-info h-100">
+                                    <div class="card-header bg-info text-white"><strong>Support</strong></div>
+                                    <div class="card-body">
+                                        <ul class="small mb-0">
+                                            <li>Work through tasks together as a class</li>
+                                            <li>Provide vocabulary support (civilization, trade, route, etc.)</li>
+                                            <li>Use visual aids and repeat key concepts</li>
+                                            <li>Break quiz into smaller chunks</li>
+                                            <li>Provide graphic organizers for comparing civilizations</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-success h-100">
+                                    <div class="card-header bg-success text-white"><strong>On-Level</strong></div>
+                                    <div class="card-body">
+                                        <ul class="small mb-0">
+                                            <li>Follow standard lesson flow</li>
+                                            <li>Encourage independent exploration</li>
+                                            <li>Use lab tasks for guided practice</li>
+                                            <li>Facilitate class discussions</li>
+                                            <li>Assign extension activities as homework</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning h-100">
+                                    <div class="card-header bg-warning text-dark"><strong>Extension</strong></div>
+                                    <div class="card-body">
+                                        <ul class="small mb-0">
+                                            <li>Research specific trade routes in depth</li>
+                                            <li>Compare ancient trade to modern globalization</li>
+                                            <li>Analyze primary sources about trade</li>
+                                            <li>Create detailed trade route maps</li>
+                                            <li>Debate the impact of trade on civilizations</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 shadow-sm">
+                        <h5 class="fw-bold"><i class="fas fa-exclamation-circle me-2"></i>Technical Notes</h5>
+                        <ul class="mb-0">
+                            <li>The map uses static image files (map1.jpg, map2.jpg, map3.jpg) that should be in the <code>ancient_trade_routes/</code> folder</li>
+                            <li>All content is self-contained in a single HTML file - no additional downloads required</li>
+                            <li>The quiz automatically tracks progress and shows scores</li>
+                            <li>Works best on modern browsers (Chrome, Firefox, Safari, Edge)</li>
+                            <li>The Student Lab sidebar can be toggled open/closed without losing map state</li>
+                            <li>All three map layers are interactive - students can click on hotspots for information</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning border-0 shadow-sm mt-3">
+                        <h5 class="fw-bold"><i class="fas fa-link me-2"></i>Connections to Other Topics</h5>
+                        <p class="mb-2"><strong>This resource connects to:</strong></p>
+                        <ul class="mb-0">
+                            <li><strong>Geography:</strong> Physical features, climate, and their impact on human settlement</li>
+                            <li><strong>Economics:</strong> Supply and demand, specialization, and the value of goods</li>
+                            <li><strong>Cultural Studies:</strong> How ideas and technology spread through trade</li>
+                            <li><strong>World History:</strong> Foundation for understanding later empires and trade networks</li>
+                            <li><strong>Modern Studies:</strong> Compare ancient trade routes to modern globalization</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top border-3" style="border-color: var(--accent-gold) !important;">
+                    <button type="button" class="btn btn-lg px-5" style="background: var(--accent-clay); color: white; font-weight: bold;" data-bs-dismiss="modal">
+                        <i class="fas fa-check me-2"></i>Close Lesson Plan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- CONFIGURATION ---
+            const mapData = {
+                foundations: {
+                    img: 'ancient_trade_routes/map1.jpg',
+                    items: [
+                        { type: 'label', top: 60, left: 12, text: "EGYPT", info: "The Nile River Valley. Known for pyramids and gold." },
+                        { type: 'label', top: 45, left: 30, text: "MESOPOTAMIA", info: "The Land Between Two Rivers (Tigris & Euphrates)." },
+                        { type: 'label', top: 60, left: 50, text: "INDUS VALLEY", info: "Harappan Civilization. Advanced city planning." },
+                        { type: 'label', top: 50, left: 82, text: "ANCIENT CHINA", info: "Yellow River Valley. Birthplace of silk." },
+                        { type: 'dot', top: 55, left: 15, label: "Nile River", info: "The lifeblood of Egypt." },
+                        { type: 'dot', top: 38, left: 32, label: "Tigris River", info: "One of the twin rivers of Mesopotamia." },
+                        { type: 'dot', top: 50, left: 52, label: "Indus River", info: "Supported the Harappan civilization." },
+                        { type: 'dot', top: 35, left: 80, label: "Yellow River", info: "Huang He, the cradle of Chinese civilization." }
+                    ]
+                },
+                trade: {
+                    img: 'ancient_trade_routes/map2.jpg',
+                    items: [
+                        { type: 'icon', top: 25, left: 85, icon: 'fa-scroll', class: 'icon-silk', text: 'Silk', info: "China's most closely guarded secret." },
+                        { type: 'icon', top: 38, left: 82, icon: 'fa-wheat-awn', class: 'icon-grain', text: 'Grain', info: "Rice and millet from the fertile plains." },
+                        { type: 'icon', top: 55, left: 55, icon: 'fa-gem', class: 'icon-gem', text: 'Gems', info: "Carnelian and Lapis Lazuli from the Indus." },
+                        { type: 'icon', top: 65, left: 50, icon: 'fa-pepper-hot', class: 'icon-spice', text: 'Spices', info: "Pepper and cinnamon from India." },
+                        { type: 'icon', top: 60, left: 35, icon: 'fa-pepper-hot', class: 'icon-spice', text: 'Spices', info: "Incense and myrrh from Arabia." },
+                        { type: 'icon', top: 55, left: 15, icon: 'fa-coins', class: 'icon-gold', text: 'Gold', info: "Mined in Nubia, south of Egypt." },
+                        { type: 'icon', top: 40, left: 32, icon: 'fa-tablet-alt', class: 'icon-clay', text: 'Tablets', info: "Cuneiform writing on clay tablets." }
+                    ]
+                },
+                culture: {
+                    img: 'ancient_trade_routes/map3.jpg',
+                    items: [
+                        { type: 'invisible', top: 52, left: 11, width: 80, height: 100, text: 'Pharaoh', info: "The god-king of Egypt." },
+                        { type: 'invisible', top: 48, left: 28, width: 100, height: 70, text: 'Ziggurat', info: "Massive stepped temple tower." },
+                        { type: 'invisible', top: 30, left: 38, width: 140, height: 110, text: 'Cuneiform', info: "Early writing system." },
+                        { type: 'invisible', top: 60, left: 63, width: 90, height: 90, text: 'Unicorn Seal', info: "Soapstone trade seals." },
+                        { type: 'invisible', top: 20, left: 76, width: 120, height: 70, text: 'Silk Scroll', info: "Symbol of Chinese culture." },
+                        { type: 'invisible', top: 75, left: 10, width: 120, height: 40, text: "EGYPT", info: "Nile Civilization" },
+                        { type: 'invisible', top: 45, left: 40, width: 100, height: 40, text: "SUMER", info: "First Urban Civilization" },
+                        { type: 'invisible', top: 78, left: 63, width: 120, height: 40, text: "HARAPPA", info: "Indus Valley Civilization" },
+                        { type: 'invisible', top: 33, left: 73, width: 100, height: 40, text: "CHINA", info: "Yellow River Civilization" }
+                    ]
+                }
+            };
+
+            // --- UI REFERENCES ---
+            const imgEl = document.getElementById('map-image');
+            const hotspotLayer = document.getElementById('hotspot-layer');
+            const labSidebar = document.getElementById('lab-sidebar');
+            const quizOverlay = document.getElementById('quiz-overlay');
+            
+            // Buttons
+            const btnMap = document.getElementById('btn-map');
+            const btnLab = document.getElementById('btn-lab');
+            const btnQuiz = document.getElementById('btn-quiz');
+            const btnLesson = document.getElementById('btn-lesson');
+            const btnCloseLab = document.getElementById('close-lab');
+            const btnCloseQuiz = document.getElementById('close-quiz');
+
+            // --- VIEW CONTROLLER ---
+            function switchView(view) {
+                // Reset Nav Active States
+                [btnMap, btnLab, btnQuiz].forEach(b => b.classList.remove('active'));
+
+                if (view === 'map') {
+                    btnMap.classList.add('active');
+                    labSidebar.classList.remove('active');
+                    quizOverlay.classList.remove('active');
+                } 
+                else if (view === 'lab') {
+                    btnLab.classList.add('active');
+                    labSidebar.classList.add('active'); // Slide in
+                    quizOverlay.classList.remove('active');
+                } 
+                else if (view === 'quiz') {
+                    btnQuiz.classList.add('active');
+                    labSidebar.classList.remove('active');
+                    quizOverlay.classList.add('active'); // Show full screen
+                }
+            }
+
+            // Events
+            btnMap.addEventListener('click', () => switchView('map'));
+            btnLab.addEventListener('click', () => switchView('lab'));
+            btnQuiz.addEventListener('click', () => switchView('quiz'));
+            btnCloseLab.addEventListener('click', () => switchView('map'));
+            btnCloseQuiz.addEventListener('click', () => switchView('map'));
+            
+            btnLesson.addEventListener('click', () => {
+                new bootstrap.Modal(document.getElementById('lessonPlanModal')).show();
+            });
+
+            // --- MAP LOGIC ---
+            function setMapMode(mode) {
+                const data = mapData[mode];
+                imgEl.style.opacity = 0;
+                
+                setTimeout(() => {
+                    imgEl.src = data.img;
+                    renderHotspots(data.items);
+                    imgEl.onload = () => { imgEl.style.opacity = 1; };
+                }, 200);
+            }
+
+            function renderHotspots(items) {
+                hotspotLayer.innerHTML = '';
+                items.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'map-hotspot';
+                    el.style.top = item.top + '%';
+                    el.style.left = item.left + '%';
+
+                    // Visual style
+                    if(item.type === 'label') {
+                        el.className += ' region-label';
+                        el.innerText = item.text;
+                    } else if(item.type === 'icon') {
+                        el.className += ` icon-marker ${item.class}`;
+                        el.innerHTML = `<i class="fas ${item.icon}"></i>`;
+                    } else if(item.type === 'culture') {
+                        el.className += ' culture-icon';
+                        el.innerText = item.icon;
+                    } else if(item.type === 'dot') {
+                        el.style.width = '20px';
+                        el.style.height = '20px';
+                        el.style.background = 'rgba(52, 152, 219, 0.6)';
+                        el.style.borderRadius = '50%';
+                        el.style.border = '2px solid white';
+                    } else if(item.type === 'invisible') {
+                        el.className += ' invisible-trigger';
+                        el.style.width = (item.width || 50) + 'px';
+                        el.style.height = (item.height || 50) + 'px';
+                    }
+
+                    // Popover
+                    if(item.info) {
+                        const pop = document.createElement('div');
+                        pop.className = 'hotspot-popover';
+                        pop.innerHTML = `<strong>${item.text || item.label}</strong>${item.info}`;
+                        el.appendChild(pop);
+                    }
+                    hotspotLayer.appendChild(el);
+                });
+            }
+
+            // Map Radio Listeners
+            document.querySelectorAll('.map-radio').forEach(r => {
+                r.addEventListener('change', (e) => setMapMode(e.target.value));
+            });
+
+            // --- LAB LOGIC ---
+            document.querySelectorAll('.lab-item').forEach(item => {
+                item.addEventListener('click', () => item.classList.toggle('completed'));
+            });
+
+            // --- QUIZ GENERATOR ---
+            const quizData = [
+                { q: "Which river was the heart of Ancient Egypt?", a: ["Tigris", "Nile", "Indus", "Yellow"], c: 1 },
+                { q: "The 'Silk Road' connected China to which region?", a: ["Americas", "Australia", "Mediterranean", "South Africa"], c: 2 },
+                { q: "What was a major trade good from India?", a: ["Spices", "Silk", "Papyrus", "Olive Oil"], c: 0 },
+                { q: "Mesopotamia is located between which two rivers?", a: ["Nile & Amazon", "Tigris & Euphrates", "Indus & Ganges", "Yellow & Yangtze"], c: 1 },
+                { q: "Which civilization is famous for Ziggurats?", a: ["Egypt", "China", "Mesopotamia", "Indus Valley"], c: 2 },
+                { q: "What material was strictly controlled by the Chinese government?", a: ["Gold", "Silk", "Cotton", "Iron"], c: 1 },
+                { q: "Which civilization developed the first writing system (Cuneiform)?", a: ["Mesopotamia", "Egypt", "Indus Valley", "China"], c: 0 },
+                { q: "The Indus Valley civilization is known for its...", a: ["Pyramids", "Urban Planning", "Great Wall", "Gladiators"], c: 1 },
+                { q: "Which body of water lies to the east of Egypt?", a: ["Mediterranean Sea", "Red Sea", "Black Sea", "Caspian Sea"], c: 1 },
+                { q: "What seasonal wind patterns enabled sea trade across the Indian Ocean?", a: ["Hurricanes", "Monsoons", "Tornadoes", "Blizzards"], c: 1 },
+                { q: "Which civilization was protected by the Gobi Desert and Himalayas?", a: ["Mesopotamia", "Egypt", "China", "Indus Valley"], c: 2 },
+                { q: "Gold was a primary export of which civilization?", a: ["Egypt", "China", "Mesopotamia", "Indus Valley"], c: 0 },
+                { q: "What shape are the pyramids of Egypt?", a: ["Triangular Prism", "Square Pyramid", "Sphere", "Cube"], c: 1 },
+                { q: "Papyrus, used for writing, grows along which river?", a: ["Nile", "Tigris", "Indus", "Yellow"], c: 0 },
+                { q: "Which modern country contains most of ancient Mesopotamia?", a: ["Egypt", "India", "Iraq", "China"], c: 2 },
+                { q: "The Yellow River is named for...", a: ["The flowers on its banks", "The sulfur in the water", "The silt (loess) it carries", "The sun's reflection"], c: 2 },
+                { q: "Which animal was crucial for land trade across deserts?", a: ["Horse", "Camel", "Elephant", "Ox"], c: 1 },
+                { q: "Lapis Lazuli, a blue gem, was traded from near the...", a: ["Nile Delta", "Indus Valley", "Gobi Desert", "Red Sea"], c: 1 },
+                { q: "Which civilization built the Great Sphinx?", a: ["Mesopotamia", "China", "Indus Valley", "Egypt"], c: 3 },
+                { q: "Why were rivers essential for early civilizations?", a: ["Transportation", "Irrigation for farming", "Drinking water", "All of the above"], c: 3 }
+            ];
+
+            const quizContainer = document.getElementById('quiz-container');
+            let score = 0;
+            let answered = new Array(quizData.length).fill(false);
+
+            function initQuiz() {
+                let html = '';
+                quizData.forEach((q, i) => {
+                    html += `
+                        <div class="card mb-3 border-0 shadow-sm" id="q-card-${i}">
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold mb-3">${i+1}. ${q.q}</h6>
+                                <div class="d-grid gap-2">
+                                    ${q.a.map((opt, optI) => `
+                                        <button class="btn btn-outline-dark text-start quiz-opt-btn" 
+                                            data-q="${i}" data-opt="${optI}">${opt}</button>
+                                    `).join('')}
+                                </div>
+                                <div class="mt-3 fw-bold d-none feedback-area"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                quizContainer.innerHTML = html;
+
+                // Quiz Delegation
+                quizContainer.addEventListener('click', (e) => {
+                    if(e.target.classList.contains('quiz-opt-btn')) {
+                        handleAnswer(e.target);
+                    }
+                });
+            }
+
+            function handleAnswer(btn) {
+                const qIndex = parseInt(btn.dataset.q);
+                const optIndex = parseInt(btn.dataset.opt);
+
+                if(answered[qIndex]) return;
+                answered[qIndex] = true;
+
+                const isCorrect = (optIndex === quizData[qIndex].c);
+                const card = document.getElementById(`q-card-${qIndex}`);
+                const feedback = card.querySelector('.feedback-area');
+                const allBtns = card.querySelectorAll('.quiz-opt-btn');
+
+                // Lock buttons
+                allBtns.forEach(b => {
+                    b.classList.add('disabled');
+                    if(parseInt(b.dataset.opt) === quizData[qIndex].c) {
+                        b.classList.remove('btn-outline-dark');
+                        b.classList.add('btn-success'); // Show correct
+                    }
+                });
+
+                if(isCorrect) {
+                    score++;
+                    btn.classList.remove('btn-outline-dark', 'btn-success'); // Already handled above
+                    btn.classList.add('btn-success');
+                    feedback.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> Correct!</span>`;
+                } else {
+                    btn.classList.remove('btn-outline-dark');
+                    btn.classList.add('btn-danger');
+                    feedback.innerHTML = `<span class="text-danger"><i class="fas fa-times"></i> Incorrect.</span>`;
+                }
+                
+                feedback.classList.remove('d-none');
+                document.getElementById('score-badge').innerText = `Score: ${score} / 20`;
+            }
+
+            // Start
+            setMapMode('foundations');
+            initQuiz();
+
+        });
+    </script>
+</body>
+</html>
+trade_routes_explorer.html
+Displaying trade_routes_explorer.html.
